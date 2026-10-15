@@ -1,0 +1,139 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e73a6f8d98c16e4f8837d5fecabf6eb, type: 3}
+  m_Name: DifficultySettings
+  m_EditorClassIdentifier: Assembly-CSharp::KeystoneKapers.DifficultySettings
+  rounds:
+  - label: 1 - Carrinhos
+    carts: 1
+    balls: 0
+    planes: 0
+    radiosPerFloor: 0
+    obstaclesPerWave: 1
+    waveInterval: 5.5
+    waveSpacing: 3.5
+    cartWaveSpacing: 1.5
+    cartSpeed: 4
+    ballSpeed: 3.2
+    planeSpeed: 5
+    ballBounceHeight: 0.35
+    ballBouncePeriod: 1.1
+    collectibles: 2
+  - label: "2 - Carrinhos + r\xE1dios"
+    carts: 1
+    balls: 0
+    planes: 0
+    radiosPerFloor: 1
+    obstaclesPerWave: 1
+    waveInterval: 5
+    waveSpacing: 3.5
+    cartWaveSpacing: 1.5
+    cartSpeed: 4.3
+    ballSpeed: 3.2
+    planeSpeed: 5
+    ballBounceHeight: 0.35
+    ballBouncePeriod: 1.1
+    collectibles: 2
+  - label: 3 - Bolas baixas
+    carts: 1
+    balls: 1
+    planes: 0
+    radiosPerFloor: 1
+    obstaclesPerWave: 2
+    waveInterval: 5
+    waveSpacing: 3.5
+    cartWaveSpacing: 1.5
+    cartSpeed: 4.6
+    ballSpeed: 3.4
+    planeSpeed: 5
+    ballBounceHeight: 0.35
+    ballBouncePeriod: 1.1
+    collectibles: 3
+  - label: "4 - Avi\xF5es"
+    carts: 1
+    balls: 1
+    planes: 1
+    radiosPerFloor: 1
+    obstaclesPerWave: 2
+    waveInterval: 4.6
+    waveSpacing: 3.5
+    cartWaveSpacing: 1.5
+    cartSpeed: 4.8
+    ballSpeed: 3.6
+    planeSpeed: 5.4
+    ballBounceHeight: 0.45
+    ballBouncePeriod: 1.1
+    collectibles: 3
+  - label: 5 - Ondas maiores
+    carts: 1
+    balls: 1
+    planes: 1
+    radiosPerFloor: 1
+    obstaclesPerWave: 2
+    waveInterval: 4.3
+    waveSpacing: 3.5
+    cartWaveSpacing: 1.5
+    cartSpeed: 5.2
+    ballSpeed: 3.8
+    planeSpeed: 5.8
+    ballBounceHeight: 0.6
+    ballBouncePeriod: 1.2
+    collectibles: 3
+  - label: 6 - Bolas altas
+    carts: 1
+    balls: 1
+    planes: 1
+    radiosPerFloor: 2
+    obstaclesPerWave: 3
+    waveInterval: 4
+    waveSpacing: 3.5
+    cartWaveSpacing: 1.5
+    cartSpeed: 5.5
+    ballSpeed: 3.8
+    planeSpeed: 6.2
+    ballBounceHeight: 1.9
+    ballBouncePeriod: 1.5
+    collectibles: 3
+  - label: "7 - R\xE1pido"
+    carts: 1
+    balls: 1
+    planes: 1
+    radiosPerFloor: 2
+    obstaclesPerWave: 3
+    waveInterval: 3.7
+    waveSpacing: 3.5
+    cartWaveSpacing: 1.5
+    cartSpeed: 6
+    ballSpeed: 4
+    planeSpeed: 6.7
+    ballBounceHeight: 2
+    ballBouncePeriod: 1.5
+    collectibles: 3
+  - label: "8 - Muito r\xE1pido"
+    carts: 1
+    balls: 1
+    planes: 1
+    radiosPerFloor: 2
+    obstaclesPerWave: 3
+    waveInterval: 3.4
+    waveSpacing: 3.5
+    cartWaveSpacing: 1.5
+    cartSpeed: 6.5
+    ballSpeed: 4.2
+    planeSpeed: 7.2
+    ballBounceHeight: 2.1
+    ballBouncePeriod: 1.5
+    collectibles: 3
+  beyondSpeedIncrease: 0.15
+  beyondIntervalDecrease: 0.15
+  minWaveInterval: 2
+  maxObstacleSpeed: 9

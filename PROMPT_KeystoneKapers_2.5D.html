@@ -1,0 +1,165 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Prompt Keystone Kapers 2.5D</title><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.35;max-width:820px;margin:24px auto;color:#000}
+h1{font-size:20pt;color:#1F3864}h2{font-size:14pt;color:#2F5496;margin-top:18pt}h3{font-size:12pt;color:#2F5496}
+table{border-collapse:collapse;margin:8pt 0}th,td{border:1px solid #888;padding:4px 8px;vertical-align:top}th{background:#D9E2F3}
+code{font-family:Consolas,monospace;font-size:10pt;background:#F2F2F2}pre{background:#F2F2F2;padding:8px}
+blockquote{border-left:3px solid #2F5496;margin-left:0;padding-left:10px;color:#333}</style></head><body><h1>Prompt — Keystone Kapers 2.5D na Unity</h1>
+<blockquote>
+<p>Cole este texto inteiro como primeira mensagem. Ele assume um projeto Unity 6 (URP + Input System) com a Unity CLI e o MCP da Unity conectados ao Editor aberto, e com os assets descritos em "Assets existentes".</p>
+</blockquote>
+<hr />
+<p>Crie neste projeto Unity um jogo completo e jogável inspirado no Keystone Kapers (Atari 2600), com personagens e cenário em 3D e movimento em um plano lateral (2.5D). Use a Unity CLI e o MCP da Unity para inspecionar o projeto, escrever os scripts, montar a cena, configurar componentes e testar em Play Mode. Execute tudo até entregar uma cena jogável; não fique só descrevendo instruções. Trabalhe de forma autônoma e só me pergunte algo se for realmente impossível decidir sozinho.</p>
+<h2>1. Preparação e regras de trabalho</h2>
+<ul>
+<li>Confirme com <code>unity status</code> que há um Editor conectado e liste os comandos disponíveis. Use o Editor ao vivo (comandos, <code>eval</code>/<code>run_script</code>) em vez de editar arquivos <code>.unity</code>/<code>.prefab</code> à mão.</li>
+<li>Ative <code>PlayerSettings.runInBackground = true</code>. Sem isso o Play Mode fica parado no primeiro frame quando o Editor está sem foco e os testes pela CLI não avançam.</li>
+<li>Salve todos os arquivos de texto em UTF-8 (o projeto usa acentos em português). Não use comandos de shell que regravem arquivos em outra codificação.</li>
+<li>Monte a cena por meio de um script de Editor idempotente (menu "Keystone Kapers/Construir Cena Principal"). Ao rodar de novo, ele deve reaproveitar assets existentes (clips, Animator Controllers, configs, prefabs) mantendo o mesmo GUID — nunca apague e recrie assets referenciados — e atribuir explicitamente os controllers também nas instâncias da cena.</li>
+<li>Não reconstrua a cena só para pequenos ajustes: corrija prefabs/cena/assets no lugar.</li>
+<li>Nunca entre em Play Mode logo após apagar/recriar assets; espere a reimportação terminar.</li>
+<li>Pastas novas: <code>Assets/Scripts/{Core,Player,Fugitive,Transport,Obstacles,UI,Config}</code>, <code>Assets/Editor</code>, <code>Assets/Animations</code>, <code>Assets/Materials</code>, <code>Assets/Config</code>, <code>Assets/Prefabs/Gameplay</code>. Scripts de teste da IA ficam fora de <code>Assets</code> (ex.: <code>AgentScripts/</code>), e capturas de tela também fora de <code>Assets</code> (ex.: <code>Screenshots/</code>).</li>
+<li>Não altere os modelos, clips e prefabs originais. Para adaptar algo, crie prefabs que envolvem o original (wrapper) ou cópias.</li>
+<li>Crie e salve a cena principal em <code>Assets/Scenes</code>, coloque-a como primeira no Build Settings e não apague as cenas existentes.</li>
+</ul>
+<h2>2. Assets existentes — inspecione antes de usar</h2>
+<p>Pastas: <code>Assets/Modelos/{Cenarios,Fugitivo,Inimigos,Policial}</code>, <code>Assets/Prefabs/{Cenario,Fugitivo,Inimigos,Policial}</code>, <code>Assets/Scenes</code>, <code>Assets/Settings</code>.</p>
+<p>Prefabs: Policial (jogador), Fugitivo, carrinho de compras, bola de praia, rádio antigo, avião biplano de brinquedo, escada rolante e elevador.</p>
+<p>Antes de escrever código, inspecione via script de Editor e registre: hierarquia, escala real (bounds dos renderers), colliders, Animator/Avatar, nomes reais dos clips, número de keyframes e se o clip realmente se move. Atenção aos pontos que costumam enganar:</p>
+<ul>
+<li><strong>Escalas muito diferentes entre prefabs</strong> (ex.: um prefab pode medir ~16 m e outro ~0,3 m). Ajuste cada wrapper à escala dos personagens (policial e fugitivo com ~1,75 m de altura).</li>
+<li><strong>Personagens podem não ter Animator, collider nem Animator Controller.</strong> Crie o que faltar no wrapper.</li>
+<li><strong>Clips Mixamo costumam se chamar <code>mixamo.com</code> e vir sem loop.</strong> Crie cópias em <code>Assets/Animations</code> com loop nos ciclos (parado, correndo, abaixado). Na cópia do pulo, remova a subida do quadril (o controlador já faz a altura).</li>
+<li><strong>Verifique se o clip do fugitivo é mesmo uma corrida</strong> (as pernas variam de rotação? tem mais de 3 keyframes?). Se o modelo do fugitivo trouxer só uma pose parada e os dois esqueletos forem Mixamo com os mesmos ossos, gere a corrida do fugitivo a partir de uma cópia da corrida do policial, ajustando a altura do quadril. Confirme em Play Mode que o estado "Correndo" toca em loop e as pernas se movem.</li>
+<li><strong>Portas do elevador:</strong> descubra quais objetos são as portas (ex.: <code>PortaEsquerda</code>/<code>PortaDireita</code>). Se forem SkinnedMeshRenderer com blendshape de abertura, anime o peso do blendshape; senão, mova as portas.</li>
+<li><strong>Orientação dos obstáculos:</strong> verifique por captura de tela que a frente de cada modelo fica visível para a câmera (o rádio, por exemplo, não pode aparecer de costas nem de perfil). O avião voa de nariz para a frente na direção do movimento.</li>
+<li>Use os colliders originais dos obstáculos como volume de impacto (como trigger); não duplique colliders.</li>
+</ul>
+<h2>3. Cenário: loja de departamentos em blocos de tela</h2>
+<p>Monte a loja com primitivos da Unity (pisos, paredes de fundo, lajes, acabamentos simples), materiais URP simples e iluminação coerente com o pipeline instalado (não migre o pipeline).</p>
+<ul>
+<li><strong>Três andares internos + terraço</strong>, com 4 m entre andares e lajes de 0,3 m. Um bloco escuro de fundação abaixo do térreo.</li>
+<li><strong>Plano de jogo em Z = 0.</strong> O corredor da frente de cada laje é contínuo (sem buracos). Todas as passagens verticais (escadas rolantes e poço do elevador) ficam numa faixa de fundo atrás do corredor (Z ≈ 1,7 a 4,2), com aberturas reais nas lajes só nessa faixa. Assim o jogador nunca cai num buraco.</li>
+<li><strong>Blocos de tela, como no original:</strong> cada andar tem <strong>7 blocos de tela</strong> — o central e <strong>3 para cada lado</strong>. Use um corredor de 96 m (x de −48 a +48), com blocos de ~13,7 m.</li>
+<li><strong>Elevador no bloco central</strong> (x = 0), atendendo apenas os três andares internos.</li>
+<li><strong>Escadas rolantes nos blocos das pontas, alternando o lado:</strong> térreo→1º à direita, 1º→2º à esquerda, 2º→terraço à direita (entrada em x ≈ ±38). O acesso ao terraço é só pela escada.</li>
+<li><strong>Ponto de fuga no terraço</strong>, na ponta oposta à chegada da escada (x ≈ −47), sinalizado com bandeira/placa.</li>
+<li>Paredes laterais nas pontas, nenhuma parede na frente da câmera, prateleiras e placas de andar como decoração.</li>
+</ul>
+<h2>4. Câmera</h2>
+<ul>
+<li>Ortográfica, lateral, Z fixo, leve inclinação (~8°) para leitura 2.5D.</li>
+<li><strong>Câmera em blocos (flip-screen):</strong> a largura visível é exatamente um bloco (ajuste o <code>orthographicSize</code> pela proporção da tela). A câmera fica parada mostrando o bloco do policial e <strong>troca de uma vez</strong> para o bloco vizinho quando ele passa da borda (corte instantâneo; deixe uma opção de transição curta no Inspector).</li>
+<li>Em Y, a câmera acompanha o andar do policial com uma transição curta, mantendo-o sempre visível (também durante escadas e elevador).</li>
+</ul>
+<h2>5. Policial (jogador)</h2>
+<p>Controles via Input System: A/D ou ←/→ correr; Espaço pular; S/↓ abaixar; W/↑ entrar no elevador (portas abertas); S/↓ sair do elevador (portas abertas); Esc pausar. Aceite gamepad também. A classe de input deve rodar antes das demais (<code>DefaultExecutionOrder</code>) e ter entradas de depuração para testes automatizados.</p>
+<ul>
+<li>Apenas <code>CharacterController</code> (sem Rigidbody, sem root motion). Movimento só em X/Y, Z travado.</li>
+<li><strong>Corrida 8 m/s</strong>, salto de 1,6 m só a partir do chão (sem salto duplo), gravidade ~30 m/s², detecção de chão confiável (CharacterController + SphereCast).</li>
+<li>Vira o visual para a direção da corrida. Abaixar reduz o collider de 1,7 m para 1,0 m e impede andar; só levanta se houver espaço acima.</li>
+<li>Animator Controller com estados Parado, Correndo, Pulando e Abaixado (parâmetros Speed, Grounded, Crouch). O pulo funciona sem animação de queda.</li>
+<li><strong>Começa no bloco da ponta esquerda do térreo</strong> (x ≈ −41), a 3 blocos do elevador. Nunca o coloque ao lado do elevador nem da escada.</li>
+<li>Após um impacto: proteção de ~1,5 s com o modelo piscando, sem precisar de clip novo.</li>
+</ul>
+<h2>6. Escadas rolantes</h2>
+<ul>
+<li>Use o prefab existente escalado para vencer 4 m de altura, sem colliders bloqueando o caminho.</li>
+<li>Transporte automático por uma trajetória com pontos ajustáveis no Inspector (entrada no corredor → início da rampa → fim da rampa → saída no corredor), velocidade constante, sem teletransporte e sem ativação repetida durante o percurso. Desligue o CharacterController durante o transporte e devolva o controle no fim.</li>
+<li><strong>Para o policial, só sobem.</strong> Ele entra ao encostar na entrada inferior andando em direção a ela.</li>
+<li><strong>Escadas de descida exclusivas do fugitivo</strong>, ao lado das de subida (atrás, com material de cor diferente e placa "SERVIÇO"). O policial não é afetado por elas.</li>
+<li><strong>A velocidade do fugitivo na escada nunca pode ser maior que a do policial</strong> (ex.: policial 3,2 m/s, fugitivo 3,0 m/s).</li>
+</ul>
+<h2>7. Elevador</h2>
+<ul>
+<li>Separe cabine móvel (o prefab), portas (dentro do prefab) e elementos fixos (poço, trilhos, molduras de primitivos).</li>
+<li>Ciclo automático: chegar → abrir portas → esperar ~2,6 s → fechar → viajar, subindo e descendo entre os três andares internos.</li>
+<li><strong>Posição inicial:</strong> a cada rodada (e a cada tentativa), a cabine começa parada no <strong>2º andar com as portas fechadas</strong>, espera ~1 s e <strong>desce até o térreo</strong>. Calibre para que o policial, correndo direto do ponto inicial, chegue com as portas abertas e consiga subir (portas abertas no térreo de ~3,4 s a ~6,0 s; o policial chega em ~5 s). Quem demorar perde o elevador. Deixe andar inicial e espera configuráveis no <code>GameConfig</code>.</li>
+<li>O policial entra só se estiver em frente à porta, com a cabine alinhada ao andar e as portas abertas. Dentro da cabine: segue a cabine, sem gravidade nem colisões, corrida e salto bloqueados. Sai quando as portas abrem, num ponto seguro do corredor.</li>
+<li>Ajuste a luz que vier dentro do prefab para não estourar a cena (altere a instância, não o original).</li>
+</ul>
+<h2>8. Fugitivo (IA determinística)</h2>
+<ul>
+<li>Corre continuamente com a animação de corrida (ritmo da animação proporcional à velocidade), Z fixo, sem colisões, sem usar o elevador.</li>
+<li>Rota: sobe pelas escadas rolantes até o terraço e foge pela ponta sinalizada (perde-se uma vida).</li>
+<li>Reage ao policial: se ele estiver no mesmo andar bloqueando o caminho, inverte a direção e usa a descida exclusiva; não sobe se o policial estiver esperando perto da saída da escada no andar de cima; patrulha o corredor quando não pode avançar. Tempo mínimo entre inversões para não tremer.</li>
+<li>Limite o deslocamento por frame (quedas de framerate não podem fazê-lo "pular").</li>
+<li><strong>Velocidade fixa em todas as rodadas: 4,0 m/s</strong> (50% da do policial). Ela <strong>não muda</strong> com a rodada. Fica num único campo do <code>GameConfig</code>, não na tabela de dificuldade. Mesmo assim, trave a velocidade no próprio script do fugitivo (setter) em no máximo <strong>80% da velocidade do policial</strong>, para valer mesmo que alguém edite o valor.</li>
+<li><strong>Captura:</strong> mesmo andar, nenhum dos dois em transporte e distância horizontal ≤ 0,9 m. Nunca captura através da laje.</li>
+</ul>
+<h2>9. Obstáculos</h2>
+<p>Wrappers dos prefabs originais, escalados à altura do policial, com o collider original como trigger:</p>
+<table>
+<thead>
+<tr>
+<th>Obstáculo</th>
+<th>Comportamento</th>
+<th>Como evitar</th>
+<th>Penalidade</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Carrinho (~0,9 m)</td>
+<td>Rola no chão</td>
+<td>Saltar</td>
+<td>−9 s</td>
+</tr>
+<tr>
+<td>Bola (~0,55 m)</td>
+<td>Quica em parábola determinística; baixa nas primeiras rodadas, alta nas avançadas</td>
+<td>Saltar (baixa) / passar abaixado (alta)</td>
+<td>−9 s</td>
+</tr>
+<tr>
+<td>Rádio (~0,6 m)</td>
+<td>Parado no chão, frente para a câmera</td>
+<td>Saltar</td>
+<td>−9 s</td>
+</tr>
+<tr>
+<td>Avião</td>
+<td>Voa com a base a ~1,15 m do piso (acerta o policial em pé, passa sobre ele abaixado)</td>
+<td>Abaixar</td>
+<td>Perde uma vida</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Regra de geração (importante):</strong>
+- Os obstáculos móveis pertencem ao <strong>bloco de tela em que o policial está</strong>.
+- Ao <strong>entrar em um bloco</strong> (ou trocar de andar), remova os obstáculos móveis do bloco anterior e, ~0,5 s depois, gere a onda <strong>fora da tela, na ponta do bloco mais distante do policial</strong>, vindo em direção a ele. Nos blocos das pontas do mapa, o obstáculo nasce escondido dentro da parede lateral.
+- <strong>Carrinhos da mesma onda vêm colados</strong>, a ~1,5 m um do outro (campo próprio na tabela, separado do espaçamento das bolas e aviões). Assim o policial correndo consegue <strong>pular dois ou três carrinhos num único pulo</strong>.
+- Ondas seguintes também saem da ponta mais distante. Quando o obstáculo atravessa o bloco e sai, ele é reciclado (pool, sem acúmulo).
+- <strong>Nunca gere um obstáculo na borda pela qual o policial acabou de entrar</strong>, nem visível na tela, nem dentro das escadas ou na frente do elevador.
+- <strong>Rádios</strong> são estáticos: posicionados no início da tentativa, longe do policial, das escadas, do elevador e a pelo menos 3 m das bordas dos blocos.
+- Movimento previsível de arcade, sem física aleatória.</p>
+<h2>10. Rodadas, cronômetro e pontuação</h2>
+<ul>
+<li>Configurações centralizadas em ScriptableObjects editáveis: <code>GameConfig</code> (velocidades, inclusive a velocidade fixa do fugitivo, salto, tempos, elevador, proteção, câmera, pontuação) e <code>DifficultySettings</code> (tabela por rodada: tipos permitidos, obstáculos por onda, intervalo, espaçamento da onda e dos carrinhos, velocidades dos obstáculos, altura do quique, rádios por andar, coletáveis).</li>
+<li>Dificuldade crescente só nos obstáculos: rodada 1 só carrinhos → rádios → bolas baixas → aviões → ondas maiores → bolas altas → mais rápido. Depois da última linha da tabela, continue aumentando com limites. O fugitivo não acelera.</li>
+<li><strong>Cronômetro garantindo a fuga:</strong> calcule a cada rodada o tempo que o fugitivo leva do início até o ponto de fuga sem ser incomodado (distâncias reais dos corredores + comprimento das trajetórias das escadas ÷ velocidades). O tempo da rodada é <code>max(50 s, tempo de fuga + 6 s)</code>, o que dá ~69 s com o fugitivo a 4 m/s. Assim o fugitivo sempre consegue fugir antes do tempo acabar, e o jogador perde a vida pela fuga, não por um cronômetro curto demais. Deixe opção para desligar e usar 50 s fixos.</li>
+<li>Captura: encerra a rodada uma única vez, soma pontos, limpa obstáculos, reposiciona personagens, reinicia o cronômetro e avança a rodada.</li>
+<li>Pontuação: tempo restante (arredondado para cima) × 100 nas rodadas 1–8, × 200 nas 9–16, × 300 depois.</li>
+<li>Vidas: 1 policial ativo + 3 reservas (configurável). Perde-se uma vida com o avião, o tempo esgotado ou a fuga pelo terraço; a tentativa da rodada atual reinicia. Sem reservas → Game Over. Vida extra a cada 10.000 pontos, até 3 reservas.</li>
+<li>Coletáveis opcionais (maleta e saco de dinheiro com primitivos), 50 pontos.</li>
+<li>Estados explícitos da partida (Título, Jogando, Pausado, Rodada vencida, Vida perdida, Game Over) e do policial (Normal, Escada, Elevador, Congelado) para evitar conflitos.</li>
+</ul>
+<h2>11. Interface</h2>
+<ul>
+<li>HUD discreto: pontuação, cronômetro (destaque pulsando nos últimos 10 s), rodada, reservas em ícones e mensagens centrais ("RODADA N", "CAPTURADO!", "TEMPO ESGOTADO!", "O FUGITIVO ESCAPOU!", "−9s").</li>
+<li>Telas: inicial com instruções e botão Jogar; pausa com Continuar e Reiniciar; Game Over com pontuação e Jogar novamente. Use EventSystem com o módulo do Input System. Ao entrar em jogo, limpe a seleção de UI (Espaço não pode acionar um botão escondido).</li>
+<li>Minimapa gerado a partir dos dados reais da fase: três andares e terraço, escadas de subida e de descida (cores diferentes), poço e cabine do elevador, ponto de fuga, policial e fugitivo em tempo real.</li>
+</ul>
+<h2>12. Testes obrigatórios em Play Mode</h2>
+<p>Escreva cenários automatizados (async, rodando no Play Mode pela CLI) que imprimam PASS/FAIL. Quando um teste falhar, investigue se o erro está no jogo ou no próprio teste antes de mudar o jogo. Cubra:</p>
+<ol>
+<li>Corrida, virada, pulo parado e em movimento, sem salto duplo, abaixar/levantar com e sem espaço, parede lateral e transições de animação (inclusive a do fugitivo correndo em loop).</li>
+<li>Escada: início ao encostar, trajetória contínua, sem reativação, chegada ao andar certo, terraço só pela escada, descida exclusiva não afeta o policial.</li>
+<li>Elevador: começa no 2º andar com portas fechadas e desce; o policial correndo direto do início consegue entrar no térreo e subir; ciclo completo, entrada só com porta aberta, viagem, saída, corredor sem queda na frente do poço.</li>
+<li>Cada obstáculo: penalidade exata, proteção contra penalidade repetida, pode ser evitado (salto, ou abaixado contra avião e bola alta); avião em pé tira vida; dois carrinhos seguidos (e três nas rodadas avançadas) são vencidos com um único pulo correndo.</li>
+<li>Blocos: a tela mostra exatamente um bloco; a câmera troca de uma vez na borda; são 3 blocos do centro até a escada; ao entrar em um bloco o obstáculo nasce fora da tela na ponta oposta e vem em direção ao policial, sem impacto logo na entrada (testar nos dois sentidos).</li>
+<li>Fugitivo: rota completa até a fuga, reação ao bloqueio, sem teletransporte; em todas as rodadas (inclusive 20, 30, 60) a velocidade é a mesma (4 m/s), menor que a do policial, e o cronômetro é maior que o tempo de fuga; fuga real nas rodadas 1 e 8 acontece antes do tempo acabar; o policial alcança o fugitivo numa perseguição no mesmo andar.</li>
+<li>Partida: captura e pontuação, rodada encerrada uma vez, reinício da rodada, tempo esgotado, pausa (cronômetro parado), vida extra, Game Over e jogar novamente.</li>
+<li>Capturas de tela para conferir visualmente: tela inicial, elevador aberto, obstáculos (rádio de frente), fugitivo correndo, minimapa.</li>
+</ol>
+<p>Verifique o Console (sem erros nem avisos dos seus scripts) e salve a cena e os assets.</p>
+<h2>13. Entrega</h2>
+<p>Ao terminar, informe: cena principal criada, controles, scripts e recursos adicionados, o que foi encontrado nos assets e como foi resolvido, resultado dos testes (com números) e limitações restantes.</p></body></html>
